@@ -1,49 +1,55 @@
 <?php
+
 namespace DataTables\Adapters;
+
 use Phalcon\Paginator\Adapter\QueryBuilder as PQueryBuilder;
 
-class QueryBuilder extends AdapterInterface{
-  protected $builder;
+class QueryBuilder extends AdapterInterface
+{
 
-  public function setBuilder($builder) {
-    $this->builder = $builder;
-  }
+	protected $builder;
 
-  public function getResponse() {
-    $builder = new PQueryBuilder([
-      'builder' => $this->builder,
-      'limit'   => 1,
-      'page'    => 1,
-    ]);
+	public function setBuilder($builder)
+	{
+		$this->builder = $builder;
+	}
 
-    $total = $builder->getPaginate();
+	public function getResponse()
+	{
+		$builder = new PQueryBuilder([
+			'builder' => $this->builder,
+			'limit' => 1,
+			'page' => 1,
+		]);
 
-    $this->bind('global_search', function($column, $search) {
-      $this->builder->orWhere("{$column} LIKE :key_{$column}:", ["key_{$column}" => "%{$search}%"]);
-    });
+		$total = $builder->getPaginate();
 
-    $this->bind('column_search', function($column, $search) {
-      $this->builder->andWhere("{$column} LIKE :key_{$column}:", ["key_{$column}" => "%{$search}%"]);
-    });
+		$this->bind('global_search', function($column, $search) {
+			$this->builder->orWhere("{$column} LIKE :key_{$column}:", ["key_{$column}" => "%{$search}%"]);
+		});
 
-    $this->bind('order', function($order) {
-      if (!empty($order)) {
-        $this->builder->orderBy(implode(', ', $order));
-      }
-    });
+		$this->bind('column_search', function($column, $search) {
+			$this->builder->andWhere("{$column} LIKE :key_{$column}:", ["key_{$column}" => "%{$search}%"]);
+		});
 
-    $builder = new PQueryBuilder([
-      'builder' => $this->builder,
-      'limit'   => $this->parser->getLimit(),
-      'page'    => $this->parser->getPage(),
-    ]);
+		$this->bind('order', function($order) {
+			if (!empty($order)) {
+				$this->builder->orderBy(implode(', ', $order));
+			}
+		});
 
-    $filtered = $builder->getPaginate();
+		$builder = new PQueryBuilder([
+			'builder' => $this->builder,
+			'limit' => $this->parser->getLimit(),
+			'page' => $this->parser->getPage(),
+		]);
 
-    return $this->formResponse([
-      'total'     => $total->total_items,
-      'filtered'  => $filtered->total_items,
-      'data'      => $filtered->items->toArray(),
-    ]);
-  }
+		$filtered = $builder->getPaginate();
+
+		return $this->formResponse([
+					'total' => $total->total_items,
+					'filtered' => $filtered->total_items,
+					'data' => $filtered->items->toArray(),
+		]);
+	}
 }
